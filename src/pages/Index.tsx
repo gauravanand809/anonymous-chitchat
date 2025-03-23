@@ -1,17 +1,19 @@
 
-import { useState } from "react";
-import { User, ArrowLeft, Send, Menu, MessageSquare, Plus, Settings, LogOut, Search } from "lucide-react";
+import { useState, useEffect } from "react";
+import { User, ArrowLeft, Send, Menu, MessageSquare, Plus, Settings, LogOut, Search, Image, Mic } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import ChatMessage from "@/components/ChatMessage";
-import { useToast } from "@/components/ui/use-toast";
+import TypingIndicator from "@/components/TypingIndicator";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 // Mock data for initial development
 const MOCK_CHATS = [
-  { id: "1", name: "Anonymous Lynx", lastMessage: "Hey there! How's it going?", time: "12:30 PM", unread: 2 },
-  { id: "2", name: "Unknown Fox", lastMessage: "Did you see that news article?", time: "Yesterday", unread: 0 },
-  { id: "3", name: "Mystery Owl", lastMessage: "Let's chat later today", time: "Monday", unread: 0 },
+  { id: "1", name: "Anonymous Lynx", lastMessage: "Hey there! How's it going?", time: "12:30 PM", unread: 2, online: true },
+  { id: "2", name: "Unknown Fox", lastMessage: "Did you see that news article?", time: "Yesterday", unread: 0, online: false },
+  { id: "3", name: "Mystery Owl", lastMessage: "Let's chat later today", time: "Monday", unread: 0, online: false },
 ];
 
 const MOCK_MESSAGES = [
@@ -29,13 +31,27 @@ interface Chat {
   lastMessage: string;
   time: string;
   unread: number;
+  online: boolean;
 }
 
 const Index = () => {
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [message, setMessage] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
+  
+  // Simulate typing indicator
+  useEffect(() => {
+    if (activeChat) {
+      const typingInterval = setInterval(() => {
+        setIsTyping(prev => !prev);
+      }, 5000);
+      
+      return () => clearInterval(typingInterval);
+    }
+  }, [activeChat]);
   
   const handleChatSelect = (chatId: string) => {
     setActiveChat(chatId);
@@ -55,6 +71,17 @@ const Index = () => {
     console.log("Sending message:", message);
     // Here we would normally send the message to Firebase
     setMessage("");
+  };
+
+  const handleAttachment = () => {
+    toast({
+      title: "Attachments",
+      description: "Photo and voice message feature coming soon!",
+    });
+  };
+  
+  const navigateToSettings = () => {
+    navigate("/settings");
   };
   
   const renderSidebar = () => (
@@ -82,7 +109,12 @@ const Index = () => {
             onClick={() => handleChatSelect(chat.id)}
           >
             <div className="flex justify-between items-start mb-1">
-              <h3 className="font-medium">{chat.name}</h3>
+              <div className="flex items-center">
+                <h3 className="font-medium">{chat.name}</h3>
+                {chat.online && (
+                  <span className="ml-2 h-2 w-2 rounded-full bg-green-500"></span>
+                )}
+              </div>
               <span className="text-xs text-muted-foreground">{chat.time}</span>
             </div>
             <div className="flex justify-between items-center">
@@ -110,7 +142,7 @@ const Index = () => {
               <div className="text-xs text-muted-foreground">Tap to set nickname</div>
             </div>
           </div>
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" onClick={navigateToSettings}>
             <Settings className="h-5 w-5" />
           </Button>
         </div>
@@ -133,7 +165,11 @@ const Index = () => {
             <div className="font-medium">
               {activeChat ? MOCK_CHATS.find(chat => chat.id === activeChat)?.name : "Start Chatting"}
             </div>
-            <div className="text-xs text-muted-foreground">Online now</div>
+            <div className="text-xs text-muted-foreground">
+              {activeChat && MOCK_CHATS.find(chat => chat.id === activeChat)?.online 
+                ? "Online now" 
+                : "Offline"}
+            </div>
           </div>
         </div>
         
@@ -144,14 +180,17 @@ const Index = () => {
       
       <div className="flex-1 overflow-auto p-4 space-y-4">
         {activeChat ? (
-          MOCK_MESSAGES.map((msg) => (
-            <ChatMessage
-              key={msg.id}
-              content={msg.content}
-              sender={msg.sender as "me" | "them"}
-              timestamp={msg.timestamp}
-            />
-          ))
+          <>
+            {MOCK_MESSAGES.map((msg) => (
+              <ChatMessage
+                key={msg.id}
+                content={msg.content}
+                sender={msg.sender as "me" | "them"}
+                timestamp={msg.timestamp}
+              />
+            ))}
+            {isTyping && <TypingIndicator />}
+          </>
         ) : (
           <div className="h-full flex flex-col items-center justify-center text-center p-4">
             <MessageSquare className="h-12 w-12 text-muted-foreground mb-4" />
@@ -169,6 +208,12 @@ const Index = () => {
       {activeChat && (
         <div className="p-4 border-t">
           <div className="flex space-x-2">
+            <Button variant="ghost" size="icon" onClick={handleAttachment}>
+              <Image className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={handleAttachment}>
+              <Mic className="h-5 w-5" />
+            </Button>
             <Input
               placeholder="Type a message..."
               value={message}

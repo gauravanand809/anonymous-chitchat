@@ -98,11 +98,11 @@
   }
   
   .chat-bubble-sent {
-    @apply chat-bubble bg-chat-sent text-chat-sent-foreground ml-auto rounded-tr-none;
+    @apply chat-bubble bg-primary text-primary-foreground ml-auto rounded-tr-none;
   }
   
   .chat-bubble-received {
-    @apply chat-bubble bg-chat-received text-chat-received-foreground mr-auto rounded-tl-none;
+    @apply chat-bubble bg-secondary text-secondary-foreground mr-auto rounded-tl-none;
   }
   
   .sidebar-item {

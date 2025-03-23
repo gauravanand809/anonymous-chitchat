@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { User, ArrowLeft, Send, Menu, MessageSquare, Plus, Settings, LogOut, Search, Image, Mic } from "lucide-react";
+import { User, ArrowLeft, Send, Menu, MessageSquare, Plus, Settings, LogOut, Search, Image, Mic, UserPlus, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -64,6 +64,8 @@ const Index = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [messages, setMessages] = useState<Message[]>(MOCK_MESSAGES);
   const [isOffline, setIsOffline] = useState(false);
+  const [showActionMenu, setShowActionMenu] = useState(false);
+  const [friendRequestSent, setFriendRequestSent] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -130,6 +132,7 @@ const Index = () => {
       
       setActiveChat(newChatId);
       setMessages([]);
+      setFriendRequestSent(false);
       
       // Simulate welcome message
       setTimeout(() => {
@@ -141,6 +144,50 @@ const Index = () => {
         }]);
       }, 1000);
     }, 2000);
+  };
+
+  const handleEndChat = () => {
+    setShowActionMenu(false);
+    
+    toast({
+      title: "Chat Ended",
+      description: "You've ended the chat with this stranger."
+    });
+    
+    // Add system message about chat ending
+    const endMessage: Message = {
+      id: `end-${Date.now()}`,
+      content: "You ended this chat. Start a new chat to talk with someone else.",
+      sender: "them",
+      timestamp: "Just now"
+    };
+    
+    setMessages(prev => [...prev, endMessage]);
+    
+    // Reset active chat after a delay
+    setTimeout(() => {
+      setActiveChat(null);
+    }, 2000);
+  };
+  
+  const handleSendFriendRequest = () => {
+    setShowActionMenu(false);
+    setFriendRequestSent(true);
+    
+    toast({
+      title: "Friend Request Sent",
+      description: "Friend request sent to this stranger."
+    });
+    
+    // Add system message about friend request
+    const friendRequestMessage: Message = {
+      id: `friend-${Date.now()}`,
+      content: "You sent a friend request to this stranger. They'll need to accept it to add you to their contacts.",
+      sender: "them",
+      timestamp: "Just now"
+    };
+    
+    setMessages(prev => [...prev, friendRequestMessage]);
   };
   
   const handleSendMessage = () => {
@@ -289,9 +336,43 @@ const Index = () => {
           </div>
         </div>
         
-        <Button variant="ghost" size="icon" onClick={() => setActiveChat(null)}>
-          <LogOut className="h-5 w-5" />
-        </Button>
+        {activeChat ? (
+          <div className="relative">
+            <Button variant="ghost" size="icon" onClick={() => setShowActionMenu(!showActionMenu)}>
+              <span className="sr-only">Chat actions</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                <circle cx="12" cy="12" r="1" />
+                <circle cx="12" cy="5" r="1" />
+                <circle cx="12" cy="19" r="1" />
+              </svg>
+            </Button>
+            
+            {showActionMenu && (
+              <div className="absolute right-0 top-full mt-1 z-50 bg-background border rounded-lg shadow-lg w-48 py-1 text-sm">
+                <button 
+                  className="flex w-full items-center px-4 py-2 hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={handleSendFriendRequest}
+                  disabled={friendRequestSent}
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  {friendRequestSent ? "Friend Request Sent" : "Send Friend Request"}
+                </button>
+                <div className="h-px bg-border my-1"></div>
+                <button 
+                  className="flex w-full items-center px-4 py-2 text-destructive hover:bg-secondary"
+                  onClick={handleEndChat}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  End Chat
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <Button variant="ghost" size="icon" onClick={() => setActiveChat(null)}>
+            <LogOut className="h-5 w-5" />
+          </Button>
+        )}
       </div>
       
       <div className="flex-1 overflow-auto p-4 space-y-4">

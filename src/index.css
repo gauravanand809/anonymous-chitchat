@@ -34,11 +34,6 @@
     --ring: 221 83% 53%;
 
     --radius: 1rem;
-
-    --chat-sent: 221 83% 53%;
-    --chat-sent-foreground: 0 0% 100%;
-    --chat-received: 0 0% 95%;
-    --chat-received-foreground: 222.2 84% 4.9%;
   }
 
   .dark {
@@ -69,11 +64,6 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 48%;
-
-    --chat-sent: 217.2 91.2% 59.8%;
-    --chat-sent-foreground: 0 0% 100%;
-    --chat-received: 217.2 32.6% 17.5%;
-    --chat-received-foreground: 210 40% 98%;
   }
 }
 

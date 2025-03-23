@@ -8,6 +8,7 @@ import ChatMessage from "@/components/ChatMessage";
 import TypingIndicator from "@/components/TypingIndicator";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Mock data for initial development
 const MOCK_CHATS = [
@@ -17,19 +18,19 @@ const MOCK_CHATS = [
 ];
 
 const MOCK_MESSAGES = [
-  { id: "1", content: "Hey there! I'm using Anonymous Chat", sender: "them", timestamp: "12:30 PM" },
-  { id: "2", content: "Oh hey! Nice to meet you", sender: "me", timestamp: "12:31 PM" },
-  { id: "3", content: "What brings you here today?", sender: "them", timestamp: "12:32 PM" },
-  { id: "4", content: "Just exploring the app. It's pretty cool to chat anonymously!", sender: "me", timestamp: "12:33 PM" },
-  { id: "5", content: "Agreed! I like the privacy aspect of it. No history, no tracking.", sender: "them", timestamp: "12:34 PM" },
-  { id: "6", content: "Exactly. So what are your interests?", sender: "me", timestamp: "12:35 PM" },
+  { id: "1", content: "Hey there! I'm using Anonymous Chat", sender: "them" as const, timestamp: "12:30 PM" },
+  { id: "2", content: "Oh hey! Nice to meet you", sender: "me" as const, timestamp: "12:31 PM" },
+  { id: "3", content: "What brings you here today?", sender: "them" as const, timestamp: "12:32 PM" },
+  { id: "4", content: "Just exploring the app. It's pretty cool to chat anonymously!", sender: "me" as const, timestamp: "12:33 PM" },
+  { id: "5", content: "Agreed! I like the privacy aspect of it. No history, no tracking.", sender: "them" as const, timestamp: "12:34 PM" },
+  { id: "6", content: "Exactly. So what are your interests?", sender: "me" as const, timestamp: "12:35 PM" },
   { 
     id: "7", 
     content: "I love photography! Check out this photo I took yesterday.", 
-    sender: "them", 
+    sender: "them" as const, 
     timestamp: "12:36 PM",
     attachment: {
-      type: "image",
+      type: "image" as const,
       url: "/placeholder.svg"
     }
   },
@@ -58,6 +59,7 @@ interface Message {
 }
 
 const Index = () => {
+  const isMobile = useIsMobile();
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [message, setMessage] = useState("");
@@ -247,63 +249,64 @@ const Index = () => {
   
   const renderSidebar = () => (
     <div className="h-full flex flex-col">
-      <div className="p-4 border-b">
+      <div className="p-4 border-b sticky top-0 bg-background z-10">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold">Chats</h1>
-          <Button variant="ghost" size="icon" onClick={handleNewChat}>
+          <h1 className="text-xl font-bold">Chats</h1>
+          <Button variant="ghost" size="icon" onClick={handleNewChat} className="hover:bg-secondary rounded-full">
             <Plus className="h-5 w-5" />
           </Button>
         </div>
         <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search conversations..." className="pl-9" />
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Search conversations..." className="pl-9 rounded-full bg-secondary border-0" />
         </div>
       </div>
       
-      <div className="flex-1 overflow-auto py-2">
+      <div className="flex-1 overflow-auto py-2 no-scrollbar">
         {MOCK_CHATS.map((chat) => (
           <div
             key={chat.id}
-            className={`px-4 py-3 mb-1 cursor-pointer rounded-lg ${
-              activeChat === chat.id ? "bg-secondary" : "hover:bg-secondary/50"
-            }`}
+            className={`chat-list-item ${activeChat === chat.id ? "chat-list-item-active" : ""}`}
             onClick={() => handleChatSelect(chat.id)}
           >
-            <div className="flex justify-between items-start mb-1">
-              <div className="flex items-center">
-                <h3 className="font-medium">{chat.name}</h3>
-                {chat.online && (
-                  <span className="ml-2 h-2 w-2 rounded-full bg-green-500"></span>
-                )}
+            <div className="flex items-start gap-3">
+              <div className={`avatar-container h-10 w-10 ${chat.online ? "avatar-online" : ""}`}>
+                <span className="text-lg font-semibold">{chat.name.charAt(0)}</span>
               </div>
-              <span className="text-xs text-muted-foreground">{chat.time}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <p className="text-sm text-muted-foreground truncate max-w-[180px]">
-                {chat.lastMessage}
-              </p>
-              {chat.unread > 0 && (
-                <span className="bg-primary text-primary-foreground text-xs rounded-full h-5 min-w-[20px] flex items-center justify-center">
-                  {chat.unread}
-                </span>
-              )}
+              
+              <div className="flex-1 min-w-0">
+                <div className="flex justify-between items-start mb-1">
+                  <h3 className="font-medium truncate">{chat.name}</h3>
+                  <span className="text-xs text-muted-foreground ml-2 whitespace-nowrap">{chat.time}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <p className="text-sm text-muted-foreground truncate max-w-[180px]">
+                    {chat.lastMessage}
+                  </p>
+                  {chat.unread > 0 && (
+                    <span className="bg-primary text-primary-foreground text-xs rounded-full h-5 min-w-[20px] flex items-center justify-center ml-2">
+                      {chat.unread}
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         ))}
       </div>
       
-      <div className="mt-auto border-t p-4">
+      <div className="mt-auto border-t p-4 sticky bottom-0 bg-background/90 backdrop-blur-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <div className="h-9 w-9 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
+            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
               <User className="h-5 w-5" />
             </div>
             <div className="ml-3">
               <div className="font-medium">Anonymous User</div>
-              <div className="text-xs text-muted-foreground cursor-pointer" onClick={navigateToSettings}>Tap to set nickname</div>
+              <div className="text-xs text-primary cursor-pointer hover:underline" onClick={navigateToSettings}>Tap to set nickname</div>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={navigateToSettings}>
+          <Button variant="ghost" size="icon" onClick={navigateToSettings} className="rounded-full hover:bg-secondary">
             <Settings className="h-5 w-5" />
           </Button>
         </div>
@@ -313,17 +316,17 @@ const Index = () => {
   
   const renderChatView = () => (
     <div className="h-full flex flex-col">
-      <div className="p-4 border-b flex items-center">
-        <Button variant="ghost" size="icon" className="md:hidden mr-2" onClick={() => setMobileMenuOpen(true)}>
+      <div className="p-4 border-b mobile-header flex items-center">
+        <Button variant="ghost" size="icon" className="md:hidden mr-2 rounded-full" onClick={() => setMobileMenuOpen(true)}>
           <Menu className="h-5 w-5" />
         </Button>
         
         <div className="flex-1 flex items-center">
-          <div className="h-9 w-9 rounded-full bg-secondary flex items-center justify-center">
+          <div className={`avatar-container h-10 w-10 ${activeChat && MOCK_CHATS.find(chat => chat.id === activeChat)?.online ? "avatar-online" : ""}`}>
             <MessageSquare className="h-5 w-5" />
           </div>
-          <div className="ml-3">
-            <div className="font-medium">
+          <div className="ml-3 min-w-0">
+            <div className="font-medium truncate">
               {activeChat ? MOCK_CHATS.find(chat => chat.id === activeChat)?.name : "Start Chatting"}
             </div>
             <div className="text-xs text-muted-foreground">
@@ -338,7 +341,7 @@ const Index = () => {
         
         {activeChat ? (
           <div className="relative">
-            <Button variant="ghost" size="icon" onClick={() => setShowActionMenu(!showActionMenu)}>
+            <Button variant="ghost" size="icon" onClick={() => setShowActionMenu(!showActionMenu)} className="rounded-full hover:bg-secondary">
               <span className="sr-only">Chat actions</span>
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
                 <circle cx="12" cy="12" r="1" />
@@ -348,9 +351,9 @@ const Index = () => {
             </Button>
             
             {showActionMenu && (
-              <div className="absolute right-0 top-full mt-1 z-50 bg-background border rounded-lg shadow-lg w-48 py-1 text-sm">
+              <div className="absolute right-0 top-full mt-1 z-50 glass-panel w-56 py-1 text-sm">
                 <button 
-                  className="flex w-full items-center px-4 py-2 hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex w-full items-center px-4 py-3 hover:bg-secondary/70 disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={handleSendFriendRequest}
                   disabled={friendRequestSent}
                 >
@@ -359,7 +362,7 @@ const Index = () => {
                 </button>
                 <div className="h-px bg-border my-1"></div>
                 <button 
-                  className="flex w-full items-center px-4 py-2 text-destructive hover:bg-secondary"
+                  className="flex w-full items-center px-4 py-3 text-destructive hover:bg-secondary/70"
                   onClick={handleEndChat}
                 >
                   <X className="h-4 w-4 mr-2" />
@@ -369,13 +372,13 @@ const Index = () => {
             )}
           </div>
         ) : (
-          <Button variant="ghost" size="icon" onClick={() => setActiveChat(null)}>
+          <Button variant="ghost" size="icon" onClick={() => setActiveChat(null)} className="rounded-full hover:bg-secondary">
             <LogOut className="h-5 w-5" />
           </Button>
         )}
       </div>
       
-      <div className="flex-1 overflow-auto p-4 space-y-4">
+      <div className="flex-1 overflow-auto p-4 space-y-4 no-scrollbar bg-secondary/20">
         {activeChat ? (
           <>
             {messages.map((msg) => (
@@ -391,7 +394,7 @@ const Index = () => {
                     onClick={() => viewAttachment(msg.attachment!)}
                   >
                     {msg.attachment.type === "image" ? (
-                      <div className="rounded-lg overflow-hidden border">
+                      <div className="rounded-lg overflow-hidden border shadow-sm">
                         <img 
                           src={msg.attachment.url} 
                           alt="Attachment" 
@@ -412,25 +415,27 @@ const Index = () => {
           </>
         ) : (
           <div className="h-full flex flex-col items-center justify-center text-center p-4">
-            <MessageSquare className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-xl font-medium mb-2">Welcome to Anonymous Chat</h3>
-            <p className="text-muted-foreground mb-6 max-w-md">
-              Start a new conversation or select an existing chat to begin messaging
-            </p>
-            <Button onClick={handleNewChat}>
-              <Plus className="mr-2 h-4 w-4" /> New Chat
-            </Button>
+            <div className="glass-panel p-8 max-w-md w-full">
+              <MessageSquare className="h-12 w-12 text-primary mx-auto mb-4" />
+              <h3 className="text-xl font-medium mb-2">Welcome to Anonymous Chat</h3>
+              <p className="text-muted-foreground mb-6 max-w-md">
+                Start a new conversation or select an existing chat to begin messaging
+              </p>
+              <Button onClick={handleNewChat} className="w-full">
+                <Plus className="mr-2 h-4 w-4" /> New Chat
+              </Button>
+            </div>
           </div>
         )}
       </div>
       
       {activeChat && (
-        <div className="p-4 border-t">
-          <div className="flex space-x-2">
-            <Button variant="ghost" size="icon" onClick={() => handleAttachment("image")}>
+        <div className="p-4 mobile-footer safe-bottom">
+          <div className="flex space-x-2 items-center">
+            <Button variant="ghost" size="icon" onClick={() => handleAttachment("image")} className="rounded-full hover:bg-secondary">
               <Image className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={() => handleAttachment("voice")}>
+            <Button variant="ghost" size="icon" onClick={() => handleAttachment("voice")} className="rounded-full hover:bg-secondary">
               <Mic className="h-5 w-5" />
             </Button>
             <Input
@@ -438,10 +443,15 @@ const Index = () => {
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-              className="flex-1"
+              className="flex-1 rounded-full bg-secondary border-0"
               disabled={isOffline}
             />
-            <Button onClick={handleSendMessage} disabled={!message.trim() || isOffline}>
+            <Button 
+              onClick={handleSendMessage} 
+              disabled={!message.trim() || isOffline}
+              className="rounded-full aspect-square"
+              size="icon"
+            >
               <Send className="h-4 w-4" />
             </Button>
           </div>
@@ -459,8 +469,8 @@ const Index = () => {
         }`}
       >
         <div className="h-full flex flex-col">
-          <div className="p-4 flex items-center border-b">
-            <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(false)}>
+          <div className="p-4 flex items-center border-b mobile-header">
+            <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(false)} className="rounded-full hover:bg-secondary">
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <h1 className="text-xl font-bold ml-2">Chats</h1>
@@ -473,7 +483,7 @@ const Index = () => {
       </div>
       
       {/* Desktop sidebar */}
-      <div className="hidden md:block w-80 border-r overflow-hidden">
+      <div className="hidden md:block w-80 lg:w-96 xl:w-1/4 border-r overflow-hidden">
         {renderSidebar()}
       </div>
       
@@ -485,9 +495,9 @@ const Index = () => {
       {/* Offline indicator */}
       {isOffline && (
         <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50">
-          <div className="bg-destructive text-destructive-foreground px-4 py-2 rounded-full shadow-lg flex items-center">
+          <div className="glass-panel bg-destructive/10 text-destructive px-4 py-2 rounded-full shadow-lg flex items-center">
             <span className="mr-2">Connection lost. Reconnecting...</span>
-            <div className="h-2 w-2 bg-destructive-foreground rounded-full animate-pulse"></div>
+            <div className="h-2 w-2 bg-destructive rounded-full animate-pulse"></div>
           </div>
         </div>
       )}

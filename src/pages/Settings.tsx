@@ -1,7 +1,7 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Moon, Sun, Bell, BellOff, Eye, EyeOff, Trash2, User } from "lucide-react";
+import { ArrowLeft, Moon, Sun, Bell, BellOff, Eye, EyeOff, Trash2, User, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -10,25 +10,55 @@ import { useToast } from "@/hooks/use-toast";
 const Settings = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [nickname, setNickname] = useState("Anonymous User");
-  const [darkMode, setDarkMode] = useState(false);
-  const [notifications, setNotifications] = useState(true);
-  const [blurPhotos, setBlurPhotos] = useState(false);
+  const [nickname, setNickname] = useState(() => localStorage.getItem("nickname") || "Anonymous User");
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem("darkMode") === "true");
+  const [notifications, setNotifications] = useState(() => localStorage.getItem("notifications") !== "false");
+  const [blurPhotos, setBlurPhotos] = useState(() => localStorage.getItem("blurPhotos") === "true");
+  const [backupEnabled, setBackupEnabled] = useState(() => localStorage.getItem("backupEnabled") === "true");
+  const [preventScreenshots, setPreventScreenshots] = useState(() => localStorage.getItem("preventScreenshots") === "true");
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Apply dark mode
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
 
   const handleSaveSettings = () => {
-    toast({
-      title: "Settings Saved",
-      description: "Your preferences have been updated.",
-    });
-    navigate("/chat");
+    setIsSaving(true);
+    
+    // Simulate saving delay
+    setTimeout(() => {
+      // Save settings to localStorage
+      localStorage.setItem("nickname", nickname);
+      localStorage.setItem("darkMode", darkMode.toString());
+      localStorage.setItem("notifications", notifications.toString());
+      localStorage.setItem("blurPhotos", blurPhotos.toString());
+      localStorage.setItem("backupEnabled", backupEnabled.toString());
+      localStorage.setItem("preventScreenshots", preventScreenshots.toString());
+      
+      toast({
+        title: "Settings Saved",
+        description: "Your preferences have been updated.",
+      });
+      
+      setIsSaving(false);
+      navigate("/chat");
+    }, 800);
   };
 
   const handleClearHistory = () => {
-    toast({
-      title: "Chat History Cleared",
-      description: "All your chat history has been deleted from this device.",
-      variant: "destructive",
-    });
+    // Simulate clearing chat history
+    setTimeout(() => {
+      toast({
+        title: "Chat History Cleared",
+        description: "All your chat history has been deleted from this device.",
+        variant: "destructive",
+      });
+    }, 500);
   };
 
   return (
@@ -54,6 +84,9 @@ const Settings = () => {
                 onChange={(e) => setNickname(e.target.value)}
                 placeholder="Enter your nickname"
               />
+              <p className="text-xs text-muted-foreground">
+                This name will be shown to people you chat with
+              </p>
             </div>
           </div>
         </div>
@@ -89,6 +122,32 @@ const Settings = () => {
             </div>
             <Switch checked={blurPhotos} onCheckedChange={setBlurPhotos} />
           </div>
+
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col">
+              <div className="flex items-center space-x-2">
+                <User className="h-5 w-5" />
+                <span>Backup Chat History</span>
+              </div>
+              <p className="text-xs text-muted-foreground ml-7">
+                Securely backup your chats to the cloud
+              </p>
+            </div>
+            <Switch checked={backupEnabled} onCheckedChange={setBackupEnabled} />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col">
+              <div className="flex items-center space-x-2">
+                <EyeOff className="h-5 w-5" />
+                <span>Prevent Screenshots</span>
+              </div>
+              <p className="text-xs text-muted-foreground ml-7">
+                Attempt to block screenshots (not available on all devices)
+              </p>
+            </div>
+            <Switch checked={preventScreenshots} onCheckedChange={setPreventScreenshots} />
+          </div>
         </div>
 
         <div className="space-y-4">
@@ -105,8 +164,22 @@ const Settings = () => {
       </div>
 
       <div className="p-4 border-t">
-        <Button className="w-full" onClick={handleSaveSettings}>
-          Save Settings
+        <Button 
+          className="w-full" 
+          onClick={handleSaveSettings}
+          disabled={isSaving}
+        >
+          {isSaving ? (
+            <>
+              <span className="mr-2">Saving...</span>
+              <div className="h-4 w-4 rounded-full border-2 border-t-transparent border-white animate-spin"></div>
+            </>
+          ) : (
+            <>
+              <Save className="mr-2 h-4 w-4" />
+              Save Settings
+            </>
+          )}
         </Button>
       </div>
     </div>

@@ -23,6 +23,16 @@ const MOCK_MESSAGES = [
   { id: "4", content: "Just exploring the app. It's pretty cool to chat anonymously!", sender: "me", timestamp: "12:33 PM" },
   { id: "5", content: "Agreed! I like the privacy aspect of it. No history, no tracking.", sender: "them", timestamp: "12:34 PM" },
   { id: "6", content: "Exactly. So what are your interests?", sender: "me", timestamp: "12:35 PM" },
+  { 
+    id: "7", 
+    content: "I love photography! Check out this photo I took yesterday.", 
+    sender: "them", 
+    timestamp: "12:36 PM",
+    attachment: {
+      type: "image",
+      url: "/placeholder.svg"
+    }
+  },
 ];
 
 interface Chat {
@@ -34,11 +44,26 @@ interface Chat {
   online: boolean;
 }
 
+interface Attachment {
+  type: "image" | "voice";
+  url: string;
+}
+
+interface Message {
+  id: string;
+  content: string;
+  sender: "me" | "them";
+  timestamp: string;
+  attachment?: Attachment;
+}
+
 const Index = () => {
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [messages, setMessages] = useState<Message[]>(MOCK_MESSAGES);
+  const [isOffline, setIsOffline] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -52,6 +77,32 @@ const Index = () => {
       return () => clearInterval(typingInterval);
     }
   }, [activeChat]);
+
+  // Simulate occasional connectivity issues
+  useEffect(() => {
+    const offlineCheck = setInterval(() => {
+      const randomOffline = Math.random() < 0.05; // 5% chance to go offline
+      if (randomOffline && !isOffline) {
+        setIsOffline(true);
+        toast({
+          title: "Connection Lost",
+          description: "We're having trouble connecting to the server. Reconnecting...",
+          variant: "destructive"
+        });
+        
+        // Auto reconnect after 3 seconds
+        setTimeout(() => {
+          setIsOffline(false);
+          toast({
+            title: "Connected",
+            description: "You're back online!",
+          });
+        }, 3000);
+      }
+    }, 30000); // Check every 30 seconds
+    
+    return () => clearInterval(offlineCheck);
+  }, [isOffline, toast]);
   
   const handleChatSelect = (chatId: string) => {
     setActiveChat(chatId);
@@ -63,21 +114,84 @@ const Index = () => {
       title: "New Chat",
       description: "Starting a new anonymous chat...",
     });
+    
+    // Simulate finding a new chat partner
+    setTimeout(() => {
+      const newChatId = `new-${Date.now()}`;
+      const existingChats = [...MOCK_CHATS];
+      existingChats.unshift({
+        id: newChatId,
+        name: "Anonymous Stranger",
+        lastMessage: "Waiting for messages...",
+        time: "Just now",
+        unread: 0,
+        online: true
+      });
+      
+      setActiveChat(newChatId);
+      setMessages([]);
+      
+      // Simulate welcome message
+      setTimeout(() => {
+        setMessages([{
+          id: `welcome-${Date.now()}`,
+          content: "You're now chatting with a random stranger. Say hi!",
+          sender: "them",
+          timestamp: "Just now"
+        }]);
+      }, 1000);
+    }, 2000);
   };
   
   const handleSendMessage = () => {
     if (!message.trim()) return;
     
-    console.log("Sending message:", message);
-    // Here we would normally send the message to Firebase
+    // Add user message
+    const newMessage: Message = {
+      id: `me-${Date.now()}`,
+      content: message,
+      sender: "me",
+      timestamp: "Just now"
+    };
+    
+    setMessages(prev => [...prev, newMessage]);
     setMessage("");
+    
+    // Simulate reply after a delay
+    setTimeout(() => {
+      setIsTyping(true);
+      
+      setTimeout(() => {
+        setIsTyping(false);
+        
+        const replyMessage: Message = {
+          id: `them-${Date.now()}`,
+          content: "Thanks for your message! This is a prototype, so I'm just responding with a pre-written reply.",
+          sender: "them",
+          timestamp: "Just now"
+        };
+        
+        setMessages(prev => [...prev, replyMessage]);
+      }, 2000);
+    }, 1000);
   };
 
-  const handleAttachment = () => {
-    toast({
-      title: "Attachments",
-      description: "Photo and voice message feature coming soon!",
-    });
+  const handleAttachment = (type: "image" | "voice") => {
+    if (type === "image") {
+      // For the prototype, navigate to the image viewer with a placeholder
+      navigate("/image-viewer", { state: { imageUrl: "/placeholder.svg" } });
+    } else if (type === "voice") {
+      // For the prototype, we'll use a mock audio file
+      navigate("/voice-player", { state: { audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" } });
+    }
+  };
+  
+  const viewAttachment = (attachment: Attachment) => {
+    if (attachment.type === "image") {
+      navigate("/image-viewer", { state: { imageUrl: attachment.url } });
+    } else if (attachment.type === "voice") {
+      navigate("/voice-player", { state: { audioUrl: attachment.url } });
+    }
   };
   
   const navigateToSettings = () => {
@@ -139,7 +253,7 @@ const Index = () => {
             </div>
             <div className="ml-3">
               <div className="font-medium">Anonymous User</div>
-              <div className="text-xs text-muted-foreground">Tap to set nickname</div>
+              <div className="text-xs text-muted-foreground cursor-pointer" onClick={navigateToSettings}>Tap to set nickname</div>
             </div>
           </div>
           <Button variant="ghost" size="icon" onClick={navigateToSettings}>
@@ -166,14 +280,16 @@ const Index = () => {
               {activeChat ? MOCK_CHATS.find(chat => chat.id === activeChat)?.name : "Start Chatting"}
             </div>
             <div className="text-xs text-muted-foreground">
-              {activeChat && MOCK_CHATS.find(chat => chat.id === activeChat)?.online 
-                ? "Online now" 
-                : "Offline"}
+              {isOffline 
+                ? "Reconnecting..." 
+                : (activeChat && MOCK_CHATS.find(chat => chat.id === activeChat)?.online 
+                  ? "Online now" 
+                  : "Offline")}
             </div>
           </div>
         </div>
         
-        <Button variant="ghost" size="icon">
+        <Button variant="ghost" size="icon" onClick={() => setActiveChat(null)}>
           <LogOut className="h-5 w-5" />
         </Button>
       </div>
@@ -181,13 +297,35 @@ const Index = () => {
       <div className="flex-1 overflow-auto p-4 space-y-4">
         {activeChat ? (
           <>
-            {MOCK_MESSAGES.map((msg) => (
-              <ChatMessage
-                key={msg.id}
-                content={msg.content}
-                sender={msg.sender as "me" | "them"}
-                timestamp={msg.timestamp}
-              />
+            {messages.map((msg) => (
+              <div key={msg.id}>
+                <ChatMessage
+                  content={msg.content}
+                  sender={msg.sender}
+                  timestamp={msg.timestamp}
+                />
+                {msg.attachment && (
+                  <div 
+                    className={`mt-1 ${msg.sender === "me" ? "ml-auto" : "mr-auto"} max-w-[240px] cursor-pointer`}
+                    onClick={() => viewAttachment(msg.attachment!)}
+                  >
+                    {msg.attachment.type === "image" ? (
+                      <div className="rounded-lg overflow-hidden border">
+                        <img 
+                          src={msg.attachment.url} 
+                          alt="Attachment" 
+                          className="w-full h-auto object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="chat-bubble bg-secondary flex items-center gap-2 py-3">
+                        <Mic className="h-4 w-4" />
+                        <span>Voice Message</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             ))}
             {isTyping && <TypingIndicator />}
           </>
@@ -208,10 +346,10 @@ const Index = () => {
       {activeChat && (
         <div className="p-4 border-t">
           <div className="flex space-x-2">
-            <Button variant="ghost" size="icon" onClick={handleAttachment}>
+            <Button variant="ghost" size="icon" onClick={() => handleAttachment("image")}>
               <Image className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={handleAttachment}>
+            <Button variant="ghost" size="icon" onClick={() => handleAttachment("voice")}>
               <Mic className="h-5 w-5" />
             </Button>
             <Input
@@ -220,8 +358,9 @@ const Index = () => {
               onChange={(e) => setMessage(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
               className="flex-1"
+              disabled={isOffline}
             />
-            <Button onClick={handleSendMessage} disabled={!message.trim()}>
+            <Button onClick={handleSendMessage} disabled={!message.trim() || isOffline}>
               <Send className="h-4 w-4" />
             </Button>
           </div>
@@ -261,6 +400,16 @@ const Index = () => {
       <div className="flex-1 overflow-hidden">
         {renderChatView()}
       </div>
+      
+      {/* Offline indicator */}
+      {isOffline && (
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50">
+          <div className="bg-destructive text-destructive-foreground px-4 py-2 rounded-full shadow-lg flex items-center">
+            <span className="mr-2">Connection lost. Reconnecting...</span>
+            <div className="h-2 w-2 bg-destructive-foreground rounded-full animate-pulse"></div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -8,6 +8,8 @@ import Index from "./pages/Index";
 import Welcome from "./pages/Welcome";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import ImageViewer from "./pages/ImageViewer";
+import VoiceMessagePlayer from "./pages/VoiceMessagePlayer";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +22,8 @@ const App = () => (
         <Routes>
           <Route path="/chat" element={<Index />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/image-viewer" element={<ImageViewer />} />
+          <Route path="/voice-player" element={<VoiceMessagePlayer />} />
           <Route path="/" element={<Welcome />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

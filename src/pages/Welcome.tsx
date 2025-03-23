@@ -8,7 +8,7 @@ const Welcome = () => {
   const navigate = useNavigate();
 
   const handleStartChatting = () => {
-    navigate("/");
+    navigate("/chat"); // Fix: Navigate to the chat route instead of /
   };
 
   const handleLinkAccount = () => {

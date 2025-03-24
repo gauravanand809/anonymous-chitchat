@@ -1,14 +1,15 @@
 
 import { useState, useEffect } from "react";
-import { User, ArrowLeft, Send, Menu, MessageSquare, Plus, Settings, LogOut, Search, Image, Mic, UserPlus, X } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import ChatMessage from "@/components/ChatMessage";
-import TypingIndicator from "@/components/TypingIndicator";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
+import ChatList from "@/components/ChatList";
+import ChatHeader from "@/components/ChatHeader";
+import ChatMessageList from "@/components/ChatMessageList";
+import MessageInput from "@/components/MessageInput";
+import NetworkStatus from "@/components/NetworkStatus";
 
 // Mock data for initial development
 const MOCK_CHATS = [
@@ -66,7 +67,6 @@ const Index = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [messages, setMessages] = useState<Message[]>(MOCK_MESSAGES);
   const [isOffline, setIsOffline] = useState(false);
-  const [showActionMenu, setShowActionMenu] = useState(false);
   const [friendRequestSent, setFriendRequestSent] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -149,8 +149,6 @@ const Index = () => {
   };
 
   const handleEndChat = () => {
-    setShowActionMenu(false);
-    
     toast({
       title: "Chat Ended",
       description: "You've ended the chat with this stranger."
@@ -173,7 +171,6 @@ const Index = () => {
   };
   
   const handleSendFriendRequest = () => {
-    setShowActionMenu(false);
     setFriendRequestSent(true);
     
     toast({
@@ -243,223 +240,6 @@ const Index = () => {
     }
   };
   
-  const navigateToSettings = () => {
-    navigate("/settings");
-  };
-  
-  const renderSidebar = () => (
-    <div className="h-full flex flex-col">
-      <div className="p-4 border-b sticky top-0 bg-background z-10">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-bold">Chats</h1>
-          <Button variant="ghost" size="icon" onClick={handleNewChat} className="hover:bg-secondary rounded-full">
-            <Plus className="h-5 w-5" />
-          </Button>
-        </div>
-        <div className="relative">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search conversations..." className="pl-9 rounded-full bg-secondary border-0" />
-        </div>
-      </div>
-      
-      <div className="flex-1 overflow-auto py-2 no-scrollbar">
-        {MOCK_CHATS.map((chat) => (
-          <div
-            key={chat.id}
-            className={`chat-list-item ${activeChat === chat.id ? "chat-list-item-active" : ""}`}
-            onClick={() => handleChatSelect(chat.id)}
-          >
-            <div className="flex items-start gap-3">
-              <div className={`avatar-container h-10 w-10 ${chat.online ? "avatar-online" : ""}`}>
-                <span className="text-lg font-semibold">{chat.name.charAt(0)}</span>
-              </div>
-              
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-start mb-1">
-                  <h3 className="font-medium truncate">{chat.name}</h3>
-                  <span className="text-xs text-muted-foreground ml-2 whitespace-nowrap">{chat.time}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <p className="text-sm text-muted-foreground truncate max-w-[180px]">
-                    {chat.lastMessage}
-                  </p>
-                  {chat.unread > 0 && (
-                    <span className="bg-primary text-primary-foreground text-xs rounded-full h-5 min-w-[20px] flex items-center justify-center ml-2">
-                      {chat.unread}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-      
-      <div className="mt-auto border-t p-4 sticky bottom-0 bg-background/90 backdrop-blur-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-              <User className="h-5 w-5" />
-            </div>
-            <div className="ml-3">
-              <div className="font-medium">Anonymous User</div>
-              <div className="text-xs text-primary cursor-pointer hover:underline" onClick={navigateToSettings}>Tap to set nickname</div>
-            </div>
-          </div>
-          <Button variant="ghost" size="icon" onClick={navigateToSettings} className="rounded-full hover:bg-secondary">
-            <Settings className="h-5 w-5" />
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-  
-  const renderChatView = () => (
-    <div className="h-full flex flex-col">
-      <div className="p-4 border-b mobile-header flex items-center">
-        <Button variant="ghost" size="icon" className="md:hidden mr-2 rounded-full" onClick={() => setMobileMenuOpen(true)}>
-          <Menu className="h-5 w-5" />
-        </Button>
-        
-        <div className="flex-1 flex items-center">
-          <div className={`avatar-container h-10 w-10 ${activeChat && MOCK_CHATS.find(chat => chat.id === activeChat)?.online ? "avatar-online" : ""}`}>
-            <MessageSquare className="h-5 w-5" />
-          </div>
-          <div className="ml-3 min-w-0">
-            <div className="font-medium truncate">
-              {activeChat ? MOCK_CHATS.find(chat => chat.id === activeChat)?.name : "Start Chatting"}
-            </div>
-            <div className="text-xs text-muted-foreground">
-              {isOffline 
-                ? "Reconnecting..." 
-                : (activeChat && MOCK_CHATS.find(chat => chat.id === activeChat)?.online 
-                  ? "Online now" 
-                  : "Offline")}
-            </div>
-          </div>
-        </div>
-        
-        {activeChat ? (
-          <div className="relative">
-            <Button variant="ghost" size="icon" onClick={() => setShowActionMenu(!showActionMenu)} className="rounded-full hover:bg-secondary">
-              <span className="sr-only">Chat actions</span>
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-                <circle cx="12" cy="12" r="1" />
-                <circle cx="12" cy="5" r="1" />
-                <circle cx="12" cy="19" r="1" />
-              </svg>
-            </Button>
-            
-            {showActionMenu && (
-              <div className="absolute right-0 top-full mt-1 z-50 glass-panel w-56 py-1 text-sm">
-                <button 
-                  className="flex w-full items-center px-4 py-3 hover:bg-secondary/70 disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={handleSendFriendRequest}
-                  disabled={friendRequestSent}
-                >
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  {friendRequestSent ? "Friend Request Sent" : "Send Friend Request"}
-                </button>
-                <div className="h-px bg-border my-1"></div>
-                <button 
-                  className="flex w-full items-center px-4 py-3 text-destructive hover:bg-secondary/70"
-                  onClick={handleEndChat}
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  End Chat
-                </button>
-              </div>
-            )}
-          </div>
-        ) : (
-          <Button variant="ghost" size="icon" onClick={() => setActiveChat(null)} className="rounded-full hover:bg-secondary">
-            <LogOut className="h-5 w-5" />
-          </Button>
-        )}
-      </div>
-      
-      <div className="flex-1 overflow-auto p-4 space-y-4 no-scrollbar bg-secondary/20">
-        {activeChat ? (
-          <>
-            {messages.map((msg) => (
-              <div key={msg.id}>
-                <ChatMessage
-                  content={msg.content}
-                  sender={msg.sender}
-                  timestamp={msg.timestamp}
-                />
-                {msg.attachment && (
-                  <div 
-                    className={`mt-1 ${msg.sender === "me" ? "ml-auto" : "mr-auto"} max-w-[240px] cursor-pointer`}
-                    onClick={() => viewAttachment(msg.attachment!)}
-                  >
-                    {msg.attachment.type === "image" ? (
-                      <div className="rounded-lg overflow-hidden border shadow-sm">
-                        <img 
-                          src={msg.attachment.url} 
-                          alt="Attachment" 
-                          className="w-full h-auto object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <div className="chat-bubble bg-secondary flex items-center gap-2 py-3">
-                        <Mic className="h-4 w-4" />
-                        <span>Voice Message</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
-            {isTyping && <TypingIndicator />}
-          </>
-        ) : (
-          <div className="h-full flex flex-col items-center justify-center text-center p-4">
-            <div className="glass-panel p-8 max-w-md w-full">
-              <MessageSquare className="h-12 w-12 text-primary mx-auto mb-4" />
-              <h3 className="text-xl font-medium mb-2">Welcome to Anonymous Chat</h3>
-              <p className="text-muted-foreground mb-6 max-w-md">
-                Start a new conversation or select an existing chat to begin messaging
-              </p>
-              <Button onClick={handleNewChat} className="w-full">
-                <Plus className="mr-2 h-4 w-4" /> New Chat
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
-      
-      {activeChat && (
-        <div className="p-4 mobile-footer safe-bottom">
-          <div className="flex space-x-2 items-center">
-            <Button variant="ghost" size="icon" onClick={() => handleAttachment("image")} className="rounded-full hover:bg-secondary">
-              <Image className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => handleAttachment("voice")} className="rounded-full hover:bg-secondary">
-              <Mic className="h-5 w-5" />
-            </Button>
-            <Input
-              placeholder="Type a message..."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-              className="flex-1 rounded-full bg-secondary border-0"
-              disabled={isOffline}
-            />
-            <Button 
-              onClick={handleSendMessage} 
-              disabled={!message.trim() || isOffline}
-              className="rounded-full aspect-square"
-              size="icon"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-  
   return (
     <div className="h-screen flex overflow-hidden">
       {/* Mobile chat list sidebar */}
@@ -477,30 +257,62 @@ const Index = () => {
           </div>
           
           <div className="flex-1 overflow-auto">
-            {renderSidebar()}
+            <ChatList 
+              chats={MOCK_CHATS}
+              activeChat={activeChat}
+              onChatSelect={handleChatSelect}
+              onNewChat={handleNewChat}
+            />
           </div>
         </div>
       </div>
       
       {/* Desktop sidebar */}
       <div className="hidden md:block w-80 lg:w-96 xl:w-1/4 border-r overflow-hidden">
-        {renderSidebar()}
+        <ChatList 
+          chats={MOCK_CHATS}
+          activeChat={activeChat}
+          onChatSelect={handleChatSelect}
+          onNewChat={handleNewChat}
+        />
       </div>
       
       {/* Main chat area */}
       <div className="flex-1 overflow-hidden">
-        {renderChatView()}
+        <div className="h-full flex flex-col">
+          <ChatHeader 
+            activeChat={activeChat}
+            chatName={MOCK_CHATS.find(chat => chat.id === activeChat)?.name}
+            isOnline={MOCK_CHATS.find(chat => chat.id === activeChat)?.online}
+            isOffline={isOffline}
+            onMobileMenuOpen={() => setMobileMenuOpen(true)}
+            onEndChat={handleEndChat}
+            onSendFriendRequest={handleSendFriendRequest}
+            friendRequestSent={friendRequestSent}
+          />
+          
+          <ChatMessageList 
+            activeChat={activeChat}
+            messages={messages}
+            isTyping={isTyping}
+            onNewChat={handleNewChat}
+            viewAttachment={viewAttachment}
+          />
+          
+          {activeChat && (
+            <MessageInput 
+              message={message}
+              isOffline={isOffline}
+              onMessageChange={(e) => setMessage(e.target.value)}
+              onSendMessage={handleSendMessage}
+              onAttachment={handleAttachment}
+            />
+          )}
+        </div>
       </div>
       
       {/* Offline indicator */}
-      {isOffline && (
-        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50">
-          <div className="glass-panel bg-destructive/10 text-destructive px-4 py-2 rounded-full shadow-lg flex items-center">
-            <span className="mr-2">Connection lost. Reconnecting...</span>
-            <div className="h-2 w-2 bg-destructive rounded-full animate-pulse"></div>
-          </div>
-        </div>
-      )}
+      <NetworkStatus isOffline={isOffline} />
     </div>
   );
 };

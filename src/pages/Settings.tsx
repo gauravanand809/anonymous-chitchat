@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Moon, Sun, Bell, BellOff, Eye, EyeOff, Trash2, User, Save } from "lucide-react";
@@ -6,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
+import { useFirebaseAuth } from '@/hooks/useFirebaseAuth'; // Import useFirebaseAuth
 
 const Settings = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { updateNickname } = useFirebaseAuth(); // Use updateNickname hook
   const [nickname, setNickname] = useState(() => localStorage.getItem("nickname") || "Anonymous User");
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem("darkMode") === "true");
   const [notifications, setNotifications] = useState(() => localStorage.getItem("notifications") !== "false");
@@ -27,11 +28,12 @@ const Settings = () => {
     }
   }, [darkMode]);
 
-  const handleSaveSettings = () => {
+  const handleSaveSettings = async () => {
     setIsSaving(true);
     
-    // Simulate saving delay
-    setTimeout(() => {
+    try {
+      await updateNickname(nickname); // Update nickname in Firebase
+
       // Save settings to localStorage
       localStorage.setItem("nickname", nickname);
       localStorage.setItem("darkMode", darkMode.toString());
@@ -47,7 +49,15 @@ const Settings = () => {
       
       setIsSaving(false);
       navigate("/chat");
-    }, 800);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save settings. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleClearHistory = () => {

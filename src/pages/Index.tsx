@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import UserDashboard from '@/components/UserDashboard';
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import ChatList from "@/components/ChatList";
@@ -11,6 +12,19 @@ import MessageInput from "@/components/MessageInput";
 import NetworkStatus from "@/components/NetworkStatus";
 import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
 import { useFirebaseChat } from "@/hooks/useFirebaseChat";
+import { generateFunkyName } from "@/utils/nameGenerator";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+
+// Add interface for chat structure
+interface Chat {
+  id: string;
+  name: string;
+  lastMessage: string;
+  lastMessageTime: any; // Firebase Timestamp
+  unread: number;
+  online: boolean;
+  participants: string[];
+}
 
 const Index = () => {
   const isMobile = useIsMobile();
@@ -18,6 +32,10 @@ const Index = () => {
   const [message, setMessage] = useState("");
   const [friendRequestSent, setFriendRequestSent] = useState(false);
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [userNickname, setUserNickname] = useState<string>(() => {
+    const savedNickname = localStorage.getItem("nickname");
+    return savedNickname || generateFunkyName();
+  });
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -30,6 +48,15 @@ const Index = () => {
       signIn();
     }
   }, [authLoading, user, signIn]);
+  
+  // Remove or modify this effect as we're now handling nickname in the initial state
+  useEffect(() => {
+    if (user && (!localStorage.getItem("nickname") || !userNickname)) {
+      const nickname = generateFunkyName();
+      setUserNickname(nickname);
+      localStorage.setItem("nickname", nickname);
+    }
+  }, [user]);
   
   // Firebase chat
   const { 
@@ -44,6 +71,9 @@ const Index = () => {
     sendFriendRequest
   } = useFirebaseChat(user?.uid);
   
+  // Online status management
+  const { isOnline, isOffline } = useOnlineStatus(user?.uid);
+
   useEffect(() => {
     if (activeChat) {
       setFriendRequestSent(false);
@@ -61,12 +91,16 @@ const Index = () => {
       description: "Starting a new anonymous chat...",
     });
     
-    const chatId = await startNewChat();
+    // Use userNickname directly since it's already synchronized with localStorage
+    const chatId = await startNewChat(userNickname);
+    if (chatId) {
+      setActiveChat(chatId);
+    }
   };
-
+  
   const handleEndChat = () => {
-    if (activeChat) {
-      endChat(activeChat);
+    if (activeChat && user?.uid) {
+      endChat(activeChat, user.uid);
     }
   };
   
@@ -122,6 +156,20 @@ const Index = () => {
   // Get current chat
   const currentChat = chats.find(chat => chat.id === activeChat);
   
+  // Disable actions when offline
+  const isNetworkDisabled = isOffline || !isOnline;
+
+  // Update chat mapping to include participants
+  const mappedChats = chats.map(chat => ({
+    id: chat.id,
+    name: chat.name,
+    lastMessage: chat.lastMessage,
+    time: chat.lastMessageTime ? chat.lastMessageTime.toDate().toLocaleTimeString() : '',
+    unread: chat.unread,
+    online: chat.online,
+    participants: chat.participants || []
+  }));
+
   return (
     <div className="h-screen flex overflow-hidden">
       {/* Mobile chat list sidebar */}
@@ -140,14 +188,7 @@ const Index = () => {
           
           <div className="flex-1 overflow-auto">
             <ChatList 
-              chats={chats.map(chat => ({
-                id: chat.id,
-                name: chat.name,
-                lastMessage: chat.lastMessage,
-                time: chat.lastMessageTime ? chat.lastMessageTime.toDate().toLocaleTimeString() : '',
-                unread: chat.unread,
-                online: chat.online
-              }))}
+              chats={mappedChats}
               activeChat={activeChat}
               onChatSelect={handleChatSelect}
               onNewChat={handleNewChat}
@@ -157,16 +198,10 @@ const Index = () => {
       </div>
       
       {/* Desktop sidebar */}
-      <div className="hidden md:block w-80 lg:w-96 xl:w-1/4 border-r overflow-hidden">
+      <div className="hidden md:block w-80 lg:w-96 xl:w-1/4 border-r overflow-hidden flex flex-col">
+        <UserDashboard />
         <ChatList 
-          chats={chats.map(chat => ({
-            id: chat.id,
-            name: chat.name,
-            lastMessage: chat.lastMessage,
-            time: chat.lastMessageTime ? chat.lastMessageTime.toDate().toLocaleTimeString() : '',
-            unread: chat.unread,
-            online: chat.online
-          }))}
+          chats={mappedChats}
           activeChat={activeChat}
           onChatSelect={handleChatSelect}
           onNewChat={handleNewChat}
@@ -180,11 +215,12 @@ const Index = () => {
             activeChat={activeChat}
             chatName={currentChat?.name}
             isOnline={currentChat?.online}
-            isOffline={false}
+            isOffline={isNetworkDisabled}
             onMobileMenuOpen={() => setMobileMenuOpen(true)}
             onEndChat={handleEndChat}
             onSendFriendRequest={handleSendFriendRequest}
             friendRequestSent={friendRequestSent}
+            nickname={userNickname}
           />
           
           <ChatMessageList 
@@ -193,7 +229,7 @@ const Index = () => {
               id: msg.id,
               content: msg.content,
               sender: msg.sender,
-              timestamp: msg.timestamp ? msg.timestamp.toDate().toLocaleTimeString() : 'Just now',
+              timestamp: msg.timestamp && 'toDate' in msg.timestamp ? msg.timestamp.toDate().toLocaleTimeString() : 'Just now',
               attachment: msg.attachment
             }))}
             isTyping={false}
@@ -204,7 +240,7 @@ const Index = () => {
           {activeChat && (
             <MessageInput 
               message={message}
-              isOffline={false}
+              isOffline={isNetworkDisabled}
               onMessageChange={(e) => setMessage(e.target.value)}
               onSendMessage={handleSendMessage}
               onAttachment={handleAttachment}

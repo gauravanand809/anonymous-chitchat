@@ -6,13 +6,13 @@ import { getStorage } from "firebase/storage";
 
 // Firebase configuration - Replace with your actual Firebase project configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBpYAXtHQmiXacUl7zsb9D418E5aBcIcrw",
-  authDomain: "anon-chat-app-d7b33.firebaseapp.com",
-  databaseURL: "https://anon-chat-app-d7b33-default-rtdb.firebaseio.com",
-  projectId: "anon-chat-app-d7b33",
-  storageBucket: "anon-chat-app-d7b33.appspot.com",
-  messagingSenderId: "186704437505",
-  appId: "1:186704437505:web:885195aea184482838fb00"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 // Initialize Firebase singleton

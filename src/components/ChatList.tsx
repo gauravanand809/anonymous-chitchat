@@ -1,17 +1,19 @@
-
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Plus, Search, User, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
+import { getDoc, doc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 interface Chat {
   id: string;
   name: string;
   lastMessage: string;
-  time: string;
+  time: string | null;
   unread: number;
   online: boolean;
+  participants: string[];
 }
 
 interface ChatListProps {
@@ -28,6 +30,30 @@ const ChatList: React.FC<ChatListProps> = ({
   onNewChat 
 }) => {
   const navigate = useNavigate();
+  const [userNicknames, setUserNicknames] = useState<{[key: string]: string}>({});
+
+  useEffect(() => {
+    // Fetch nicknames for all chat participants
+    const fetchNicknames = async () => {
+      const nicknamePromises = chats.map(async (chat) => {
+        const participantPromises = chat.participants.map(async (userId) => {
+          const userDoc = await getDoc(doc(db, "users", userId));
+          const userData = userDoc.data();
+          return [userId, userData?.nickname || "Anonymous User"];
+        });
+        const nicknames = await Promise.all(participantPromises);
+        return Object.fromEntries(nicknames);
+      });
+
+      const allNicknames = await Promise.all(nicknamePromises);
+      const mergedNicknames = Object.assign({}, ...allNicknames);
+      setUserNicknames(mergedNicknames);
+    };
+
+    if (chats.length > 0) {
+      fetchNicknames();
+    }
+  }, [chats]);
   
   const navigateToSettings = () => {
     navigate("/settings");
@@ -62,12 +88,16 @@ const ChatList: React.FC<ChatListProps> = ({
               
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-start mb-1">
-                  <h3 className="font-medium truncate">{chat.name}</h3>
+                  <h3 className="font-medium truncate">
+                    {chat.participants && chat.participants.length >= 2 && userNicknames[chat.participants[1]]
+                      ? userNicknames[chat.participants[1]]
+                      : "Anonymous User"}
+                  </h3>
                   <span className="text-xs text-muted-foreground ml-2 whitespace-nowrap">{chat.time}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <p className="text-sm text-muted-foreground truncate max-w-[180px]">
-                    {chat.lastMessage}
+                    {chat.lastMessage || "No messages yet"}
                   </p>
                   {chat.unread > 0 && (
                     <span className="bg-primary text-primary-foreground text-xs rounded-full h-5 min-w-[20px] flex items-center justify-center ml-2">

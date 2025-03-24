@@ -10,7 +10,7 @@ const ActiveUsers: React.FC = () => {
   console.log("ActiveUsers Component - Online Users Data:", onlineUsers); // Log onlineUsers data
 
   return (
-    <div>
+    <div style={{ fontWeight: 'bold', color: '#333', padding: '8px 12px', borderRadius: '4px', marginTop: '10px', display: 'inline-block', backgroundColor: '#f0f0f0' }}>
       Active Users: {activeUsersCount}
     </div>
   );

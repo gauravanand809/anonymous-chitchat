@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -63,9 +62,6 @@ const Index = () => {
     });
     
     const chatId = await startNewChat();
-    if (chatId) {
-      setMessages([]);
-    }
   };
 
   const handleEndChat = () => {

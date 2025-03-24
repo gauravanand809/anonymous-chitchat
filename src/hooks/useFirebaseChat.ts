@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { db, storage } from "@/lib/firebase";
 import { 
@@ -18,7 +17,7 @@ import {
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useToast } from "@/hooks/use-toast";
-import { v4 as uuidv4 } from "firebase/firestore";
+import { v4 as uuidv4 } from "uuid";
 
 export interface Attachment {
   type: "image" | "voice";
@@ -52,7 +51,6 @@ export function useFirebaseChat(userId: string | undefined) {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Fetch user's chats
   useEffect(() => {
     if (!userId) return;
 
@@ -82,7 +80,6 @@ export function useFirebaseChat(userId: string | undefined) {
     return () => unsubscribe();
   }, [userId, toast]);
 
-  // Fetch messages for active chat
   useEffect(() => {
     if (!activeChat || !userId) return;
 
@@ -114,7 +111,6 @@ export function useFirebaseChat(userId: string | undefined) {
       });
     });
 
-    // Mark messages as read
     markMessagesAsRead(activeChat, userId);
 
     return () => unsubscribe();
@@ -136,7 +132,6 @@ export function useFirebaseChat(userId: string | undefined) {
         });
       });
       
-      // Update unread count in chat
       await updateDoc(doc(db, "chats", chatId), {
         unread: 0
       });
@@ -171,18 +166,14 @@ export function useFirebaseChat(userId: string | undefined) {
         ...(attachmentData && { attachment: attachmentData })
       };
 
-      // Add message to chat
       await addDoc(collection(db, "chats", activeChat, "messages"), messageData);
 
-      // Update last message in chat
       await updateDoc(doc(db, "chats", activeChat), {
         lastMessage: content,
         lastMessageTime: serverTimestamp()
       });
 
-      // Simulate delivery after a short delay
       setTimeout(async () => {
-        // Get the last message
         const q = query(
           collection(db, "chats", activeChat, "messages"),
           where("senderId", "==", userId),
@@ -213,7 +204,6 @@ export function useFirebaseChat(userId: string | undefined) {
     if (!userId) return null;
 
     try {
-      // Find an available random user
       const usersQuery = query(
         collection(db, "users"),
         where("available", "==", true)
@@ -229,7 +219,6 @@ export function useFirebaseChat(userId: string | undefined) {
         return null;
       }
       
-      // Get a random user
       const randomIndex = Math.floor(Math.random() * querySnapshot.size);
       const randomUser = querySnapshot.docs[randomIndex];
       const partnerId = randomUser.id;
@@ -242,7 +231,6 @@ export function useFirebaseChat(userId: string | undefined) {
         return null;
       }
       
-      // Create a new chat
       const chatRef = await addDoc(collection(db, "chats"), {
         participants: [userId, partnerId],
         lastMessage: "Chat started",
@@ -252,7 +240,6 @@ export function useFirebaseChat(userId: string | undefined) {
         name: "Anonymous Stranger"
       });
       
-      // Add welcome message
       await addDoc(collection(db, "chats", chatRef.id, "messages"), {
         content: "You're now chatting with a random stranger. Say hi!",
         senderId: partnerId,
@@ -280,7 +267,6 @@ export function useFirebaseChat(userId: string | undefined) {
     if (!chatId || !userId) return;
 
     try {
-      // Add system message about chat ending
       await addDoc(collection(db, "chats", chatId, "messages"), {
         content: "You ended this chat. Start a new chat to talk with someone else.",
         senderId: "system",
@@ -288,7 +274,6 @@ export function useFirebaseChat(userId: string | undefined) {
         status: "read"
       });
       
-      // Update the chat status
       await updateDoc(doc(db, "chats", chatId), {
         ended: true,
         online: false
@@ -316,7 +301,6 @@ export function useFirebaseChat(userId: string | undefined) {
     if (!chatId || !userId) return;
 
     try {
-      // Add system message about friend request
       await addDoc(collection(db, "chats", chatId, "messages"), {
         content: "You sent a friend request to this stranger. They'll need to accept it to add you to their contacts.",
         senderId: "system",
@@ -324,7 +308,6 @@ export function useFirebaseChat(userId: string | undefined) {
         status: "read"
       });
       
-      // Create a friend request document
       const chatDoc = await getDoc(doc(db, "chats", chatId));
       if (chatDoc.exists()) {
         const chatData = chatDoc.data();

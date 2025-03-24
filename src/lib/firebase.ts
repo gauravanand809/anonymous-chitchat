@@ -6,12 +6,13 @@ import { getStorage } from "firebase/storage";
 
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY", // Replace with your Firebase API key
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyBpYAXtHQmiXacUl7zsb9D418E5aBcIcrw",
+  authDomain: "anon-chat-app-d7b33.firebaseapp.com",
+  databaseURL: "https://anon-chat-app-d7b33-default-rtdb.firebaseio.com",
+  projectId: "anon-chat-app-d7b33",
+  storageBucket: "anon-chat-app-d7b33.firebasestorage.app",
+  messagingSenderId: "186704437505",
+  appId: "1:186704437505:web:885195aea184482838fb00"
 };
 
 // Initialize Firebase

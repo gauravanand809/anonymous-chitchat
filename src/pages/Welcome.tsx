@@ -1,20 +1,75 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MessageSquare, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
+import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 const Welcome = () => {
   const navigate = useNavigate();
+  const { user, loading, signIn } = useFirebaseAuth();
 
-  const handleStartChatting = () => {
-    navigate("/chat"); // Fix: Navigate to the chat route instead of /
+  useEffect(() => {
+    // Redirect to chat if already authenticated
+    if (!loading && user) {
+      // Create or update user document
+      const createUserDoc = async () => {
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+        
+        if (!userSnap.exists()) {
+          // Create new user document
+          await setDoc(userRef, {
+            uid: user.uid,
+            anonymous: user.isAnonymous,
+            email: user.email || null,
+            displayName: user.displayName || "Anonymous User",
+            createdAt: serverTimestamp(),
+            lastSeen: serverTimestamp(),
+            online: true,
+            available: true
+          });
+        } else {
+          // Update last seen and online status
+          await setDoc(userRef, {
+            lastSeen: serverTimestamp(),
+            online: true
+          }, { merge: true });
+        }
+      };
+      
+      createUserDoc().then(() => {
+        navigate("/chat");
+      });
+    }
+  }, [user, loading, navigate]);
+
+  const handleStartChatting = async () => {
+    try {
+      // Sign in anonymously
+      await signIn();
+    } catch (error) {
+      console.error("Error signing in:", error);
+    }
   };
 
   const handleLinkAccount = () => {
     // This will be implemented with Firebase authentication later
     console.log("Link Google Account clicked");
   };
+
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 mx-auto mb-4 border-4 border-t-primary border-r-primary border-b-primary/30 border-l-primary/30 rounded-full animate-spin"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col items-center justify-center p-6 bg-background">

@@ -1,11 +1,14 @@
 
 import React from "react";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 interface NetworkStatusProps {
-  isOffline: boolean;
+  userId?: string;
 }
 
-const NetworkStatus: React.FC<NetworkStatusProps> = ({ isOffline }) => {
+const NetworkStatus: React.FC<NetworkStatusProps> = ({ userId }) => {
+  const { isOffline } = useOnlineStatus(userId);
+  
   if (!isOffline) return null;
   
   return (

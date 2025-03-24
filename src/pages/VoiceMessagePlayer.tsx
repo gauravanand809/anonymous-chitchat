@@ -1,16 +1,28 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Play, Pause, X } from "lucide-react";
+import { ArrowLeft, Play, Pause, X, User, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+
+// Interface for user data
+interface UserData {
+  name: string;
+  avatar?: string;
+  timestamp: string;
+}
 
 const VoiceMessagePlayer = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
   const audioUrl = location.state?.audioUrl || "";
+  const userData: UserData = location.state?.userData || {
+    name: "Anonymous User",
+    timestamp: new Date().toLocaleString(),
+  };
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
@@ -96,7 +108,7 @@ const VoiceMessagePlayer = () => {
 
   return (
     <div className="fixed inset-0 bg-background z-50 flex flex-col">
-      <div className="p-4 flex items-center justify-between">
+      <div className="p-4 flex items-center justify-between border-b">
         <Button variant="ghost" size="icon" onClick={handleClose}>
           <ArrowLeft className="h-6 w-6" />
         </Button>
@@ -104,6 +116,36 @@ const VoiceMessagePlayer = () => {
         <Button variant="ghost" size="icon" onClick={handleClose}>
           <X className="h-6 w-6" />
         </Button>
+      </div>
+      
+      {/* Enhanced User Dashboard */}
+      <div className="px-6 py-5 border-b bg-muted/30">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold text-primary">User Dashboard</h3>
+          <Badge variant="outline" className="bg-primary/10 gap-1 py-1.5 pl-1.5 pr-2.5">
+            <Users className="h-4 w-4 text-primary" />
+            <span className="font-medium">Active Users: 8</span>
+          </Badge>
+        </div>
+        
+        <div className="flex items-center p-3 bg-background rounded-lg shadow-sm">
+          <div className="relative">
+            <Avatar className="h-14 w-14 border-2 border-primary">
+              <AvatarImage src={userData.avatar} alt={userData.name} />
+              <AvatarFallback className="bg-primary/10 text-primary">
+                <User className="h-7 w-7" />
+              </AvatarFallback>
+            </Avatar>
+            <div className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-green-500 border-2 border-background"></div>
+          </div>
+          <div className="ml-4 flex-1">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-semibold">{userData.name}</h3>
+              <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">Online</span>
+            </div>
+            <p className="text-sm text-muted-foreground mt-0.5">{userData.timestamp}</p>
+          </div>
+        </div>
       </div>
       
       <div className="flex-1 flex items-center justify-center p-4">

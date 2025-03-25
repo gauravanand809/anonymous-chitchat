@@ -39,25 +39,25 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
   
   if (!activeChat) {
     return (
-      <div className="h-full flex flex-col items-center justify-center text-center p-4">
-        <div className="glass-panel p-8 max-w-md w-full">
-          <div className="h-12 w-12 text-primary mx-auto mb-4">
-            <MessageSquare className="h-12 w-12" />
-          </div>
-          <h3 className="text-xl font-medium mb-2">Welcome to Anonymous Chat</h3>
-          <p className="text-muted-foreground mb-6 max-w-md">
-            Start a new conversation or select an existing chat to begin messaging
-          </p>
-          <Button onClick={onNewChat} className="w-full">
-            <Plus className="mr-2 h-4 w-4" /> New Chat
-          </Button>
+    <div className="h-full flex flex-col items-center justify-center text-center p-6 bg-background">
+      <div className="bg-background border rounded-xl p-8 max-w-md w-full shadow-sm">
+        <div className="h-12 w-12 text-primary mx-auto mb-4">
+          <MessageSquare className="h-12 w-12" />
         </div>
+        <h3 className="text-xl font-semibold mb-2">Welcome to Anonymous Chat</h3>
+        <p className="text-muted-foreground mb-6">
+          Start a new conversation or select an existing chat to begin messaging
+        </p>
+        <Button onClick={onNewChat} className="w-full" size="lg">
+          <Plus className="mr-2 h-4 w-4" /> New Chat
+        </Button>
       </div>
+    </div>
     );
   }
   
   return (
-    <div className="flex-1 overflow-auto p-4 space-y-4 no-scrollbar bg-secondary/20">
+    <div className="flex-1 overflow-auto p-4 space-y-4 no-scrollbar bg-background">
       {messages.map((msg) => (
         <div key={msg.id}>
           <ChatMessage
@@ -71,7 +71,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
               onClick={() => viewAttachment(msg.attachment!)}
             >
               {msg.attachment.type === "image" ? (
-                <div className="rounded-lg overflow-hidden border shadow-sm">
+                <div className="rounded-xl overflow-hidden border shadow-sm">
                   <img 
                     src={msg.attachment.url} 
                     alt="Attachment" 
@@ -79,7 +79,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
                   />
                 </div>
               ) : (
-                <div className="chat-bubble bg-secondary flex items-center gap-2 py-3">
+                <div className="bg-secondary rounded-lg flex items-center gap-2 px-4 py-3 text-sm">
                   <Mic className="h-4 w-4" />
                   <span>Voice Message</span>
                 </div>

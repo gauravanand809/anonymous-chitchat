@@ -11,6 +11,7 @@ import {
   doc,
   setDoc,
   updateDoc,
+  deleteDoc,
   serverTimestamp,
   getDocs,
   Timestamp,
@@ -59,20 +60,23 @@ export function useFirebaseChat(userId: string | undefined) {
     setLoading(true);
     const q = query(
       collection(db, "chats"),
-      where("participants", "array-contains", userId)
+      where("participants", "array-contains", userId),
+      where("online", "==", true)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const chatData: FirebaseChat[] = [];
       snapshot.forEach((doc) => {
-        chatData.push({ id: doc.id, ...doc.data() } as FirebaseChat);
+        const chat = { id: doc.id, ...doc.data() } as FirebaseChat;
+        // Only include chats that are marked as online
+        if (chat.online) {
+          chatData.push(chat);
+        }
       });
       setChats(chatData);
-      console.log("Fetched chats:", chatData); // ADDED CONSOLE LOG
       setLoading(false);
     }, (err) => {
       setError(err.message);
-      console.error("Error fetching chats:", err.message); // ADDED CONSOLE LOG
       setLoading(false);
       toast({
         title: "Error fetching chats",
@@ -81,7 +85,28 @@ export function useFirebaseChat(userId: string | undefined) {
       });
     });
 
-    return () => unsubscribe();
+    // Cleanup inactive chats periodically
+    const cleanupInterval = setInterval(async () => {
+      try {
+        const inactiveChatsQuery = query(
+          collection(db, "chats"),
+          where("participants", "array-contains", userId),
+          where("online", "==", false)
+        );
+        
+        const inactiveSnap = await getDocs(inactiveChatsQuery);
+        inactiveSnap.forEach(async (doc) => {
+          await deleteDoc(doc.ref);
+        });
+      } catch (err) {
+        console.error("Error cleaning up inactive chats:", err);
+      }
+    }, 300000); // Run every 5 minutes
+
+    return () => {
+      unsubscribe();
+      clearInterval(cleanupInterval);
+    };
   }, [userId, toast]);
 
   useEffect(() => {
@@ -207,6 +232,13 @@ export function useFirebaseChat(userId: string | undefined) {
 
   const startNewChat = async (userNickname: string) => {
     if (!userId) return null;
+
+    // Clean up previous chat state if exists
+    if (activeChat) {
+      await endChat(activeChat, userId);
+      setMessages([]);
+      setActiveChat(null);
+    }
 
     try {
       return await runTransaction(db, async (transaction) => {
@@ -366,7 +398,37 @@ export function useFirebaseChat(userId: string | undefined) {
     if (!chatId || !userId) return;
 
     try {
-      await deleteChat(chatId, userId);
+      // Check if users are friends
+      const chatDoc = await getDoc(doc(db, "chats", chatId));
+      if (chatDoc.exists()) {
+        const chatData = chatDoc.data();
+        const partnerId = chatData.participants.find((id: string) => id !== userId);
+        
+        // Check friends collection
+        const friendDoc = await getDoc(doc(db, "friends", `${userId}_${partnerId}`));
+        if (friendDoc.exists()) {
+          toast({
+            title: "Cannot end chat",
+            description: "You are friends with this user. The chat will remain active."
+          });
+          return;
+        }
+      }
+
+      // Mark chat as offline instead of deleting immediately
+      await updateDoc(doc(db, "chats", chatId), {
+        online: false,
+        lastMessageTime: serverTimestamp()
+      });
+      
+      // Remove from local state
+      setChats(currentChats => currentChats.filter(c => c.id !== chatId));
+      setActiveChat(null);
+      
+      toast({
+        title: "Chat Ended",
+        description: "The chat has been ended."
+      });
     } catch (error) {
       console.error("Error ending chat:", error);
       toast({

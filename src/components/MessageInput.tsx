@@ -39,29 +39,39 @@ const MessageInput: React.FC<MessageInputProps> = ({
   };
   
   return (
-    <div className="p-4 mobile-footer safe-bottom">
+    <div className="p-4 mobile-footer safe-bottom bg-background border-t">
       <div className="flex space-x-2 items-center">
-        <Button variant="ghost" size="icon" onClick={() => handleAttachmentClick("image")} className="rounded-full hover:bg-secondary">
-          <Image className="h-5 w-5" />
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => handleAttachmentClick("image")} 
+          className="rounded-full hover:bg-secondary/50 transition-colors"
+        >
+          <Image className="h-5 w-5 text-muted-foreground" />
         </Button>
-        <Button variant="ghost" size="icon" onClick={() => handleAttachmentClick("voice")} className="rounded-full hover:bg-secondary">
-          <Mic className="h-5 w-5" />
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => handleAttachmentClick("voice")} 
+          className="rounded-full hover:bg-secondary/50 transition-colors"
+        >
+          <Mic className="h-5 w-5 text-muted-foreground" />
         </Button>
         <Input
           placeholder="Type a message..."
           value={message}
           onChange={onMessageChange}
           onKeyDown={(e) => e.key === "Enter" && onSendMessage()}
-          className="flex-1 rounded-full bg-secondary border-0"
+          className="flex-1 rounded-full bg-background border shadow-sm focus-visible:ring-2 focus-visible:ring-primary/50"
           disabled={isOffline}
         />
         <Button 
           onClick={onSendMessage} 
           disabled={!message.trim() || isOffline}
-          className="rounded-full aspect-square"
+          className="rounded-full aspect-square bg-primary hover:bg-primary/90 transition-colors shadow-sm"
           size="icon"
         >
-          <Send className="h-4 w-4" />
+          <Send className="h-4 w-4 text-primary-foreground" />
         </Button>
         <input 
           type="file" 

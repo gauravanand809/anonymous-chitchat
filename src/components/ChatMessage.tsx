@@ -39,19 +39,24 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       <div className="flex flex-col space-y-1 max-w-[85%]">
         <div 
           className={cn(
-            isSent ? "chat-bubble-sent" : "chat-bubble-received",
-            "animate-fade-in"
+            "px-4 py-3 rounded-2xl text-sm",
+            "animate-fade-in shadow-sm",
+            isSent 
+              ? "bg-primary text-primary-foreground rounded-br-none" 
+              : "bg-muted text-muted-foreground rounded-bl-none"
           )}
         >
           {content}
         </div>
         <div 
           className={cn(
-            "flex items-center text-xs gap-1", 
-            isSent ? "justify-end pr-2" : "justify-start pl-2"
+            "flex items-center text-xs gap-1 mt-1", 
+            isSent ? "justify-end" : "justify-start"
           )}
         >
-          <span className="text-muted-foreground">{timestamp}</span>
+          <span className={cn(
+            isSent ? "text-primary/80" : "text-muted-foreground"
+          )}>{timestamp}</span>
           {getStatusIcon()}
         </div>
       </div>

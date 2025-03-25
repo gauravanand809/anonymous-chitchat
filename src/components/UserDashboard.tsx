@@ -31,13 +31,42 @@ const UserDashboard = () => {
   // ... (previous useEffect logic remains the same) ...
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      {/* ... (other sections remain the same) ... */}
+    <div className="p-4 max-w-6xl mx-auto space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Profile Section */}
+        <section className="bg-white rounded-lg shadow-sm p-4">
+          <h2 className="text-lg font-semibold mb-3">Profile</h2>
+          <div className="flex items-center space-x-4">
+            <Avatar className="h-20 w-20">
+              <AvatarImage src={user?.photoURL || ""} />
+              <AvatarFallback className="text-2xl">
+                {user?.displayName?.charAt(0).toUpperCase() || 
+                 user?.email?.charAt(0).toUpperCase() || "U"}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h1 className="text-2xl font-bold">
+                {user?.displayName || user?.email || "User"}
+              </h1>
+              {user?.email && (
+                <p className="text-gray-600">{user.email}</p>
+              )}
+            </div>
+          </div>
+      </section>
 
-      {/* Friends List */}
-      <section className="mb-10">
-        <h2 className="text-xl font-semibold mb-6">Friends</h2>
-        {friends.length > 0 ? (
+        {/* Active Users Section */}
+        <section className="bg-white rounded-lg shadow-sm p-4">
+          <h2 className="text-lg font-semibold mb-3">Active Users</h2>
+          <ActiveUsers />
+        </section>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Friends Section */}
+        <section className="bg-white rounded-lg shadow-sm p-4">
+          <h2 className="text-lg font-semibold mb-3">Friends</h2>
+            {friends.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {friends.map((friend) => (
               <Card key={friend.id} className="hover:shadow-lg transition-all duration-200 border rounded-xl">
@@ -72,10 +101,38 @@ const UserDashboard = () => {
           </div>
         ) : (
           <p className="text-gray-500">No friends yet</p>
-        )}
-      </section>
+            )}
+        </section>
 
-      {/* ... (other sections remain the same) ... */}
+        {/* Requests Section */}
+        <section className="bg-white rounded-lg shadow-sm p-4">
+          <h2 className="text-lg font-semibold mb-3">Requests</h2>
+            {friendRequests.length > 0 ? (
+          <div className="space-y-4">
+            {friendRequests.map((request) => (
+              <div key={request.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center space-x-4">
+                  <Avatar>
+                    <AvatarFallback>R</AvatarFallback>
+                  </Avatar>
+                  <span>Request from user {request.senderId}</span>
+                </div>
+                <div className="space-x-2">
+                  <button className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600">
+                    Accept
+                  </button>
+                  <button className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600">
+                    Decline
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500">No pending requests</p>
+        )}
+        </section>
+      </div>
     </div>
   );
 };
